@@ -9,20 +9,16 @@ import { OpportunitiesModule } from './modules/opportunities/opportunities.modul
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
-import Joi from 'joi';
+import { AuthModule } from './modules/auth/auth.module';
 import databaseConfig from './config/database.config';
+import { validationSchema } from './config/validation.schema';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig],
-      validationSchema: Joi.object({
-        DATABASE_HOST: Joi.string().required(),
-        DATABASE_PORT: Joi.number().default(5432),
-        DATABASE_USER: Joi.string().required(),
-        // DATABASE_PASSWORD: Joi.string().required(),
-      }),
+      validationSchema: validationSchema,
     }),
 
     TypeOrmModule.forRootAsync({
@@ -43,22 +39,15 @@ import databaseConfig from './config/database.config';
       }),
       inject: [ConfigService],
     }),
-
     UsersModule,
-
     CompaniesModule,
-
     ClientsModule,
-
     LeadsModule,
-
     OpportunitiesModule,
-
     ContactsModule,
-
     ActivitiesModule,
-
     QuotesModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
