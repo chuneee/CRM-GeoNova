@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { CreateQuoteDto } from './dto/create-quote.dto';
-import { UpdateQuoteDto } from './dto/update-quote.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Quote } from './entities/quote.entity';
 import { Between, Repository } from 'typeorm';
@@ -16,9 +15,6 @@ export class QuotesService {
     @InjectRepository(Quote)
     private quotesRepository: Repository<Quote>,
 
-    @InjectRepository(QuoteDetail)
-    private quoteDetailsRepository: Repository<QuoteDetail>,
-
     private readonly companiesService: CompaniesService,
     private readonly clientsService: ClientsService,
     private readonly contactsService: ContactsService,
@@ -33,72 +29,98 @@ export class QuotesService {
 
     let details: QuoteDetail[] = [];
 
-    if (createQuoteDto.company) {
-      company = await this.companiesService.findOne(createQuoteDto.company);
-    }
+    const querryRunner =
+      this.quotesRepository.manager.connection.createQueryRunner();
+    await querryRunner.connect();
+    await querryRunner.startTransaction();
 
-    if (createQuoteDto.client) {
-      client = await this.clientsService.findOne(createQuoteDto.client);
-    }
+    try {
+      if (createQuoteDto.company) {
+        company = await this.companiesService.findOne(createQuoteDto.company);
 
-    if (createQuoteDto.contact) {
-      contact = await this.contactsService.findOne(createQuoteDto.contact);
-    }
+        if (!company) {
+          throw new Error('La empresa especificada no existe');
+        }
+      }
 
-    if (createQuoteDto.opportunity) {
-      opportunity = await this.opportunitiesService.findOne(
-        createQuoteDto.opportunity,
+      if (createQuoteDto.client) {
+        client = await this.clientsService.findOne(createQuoteDto.client);
+
+        if (!client) {
+          throw new Error('El cliente especificado no existe');
+        }
+      }
+
+      if (createQuoteDto.contact) {
+        contact = await this.contactsService.findOne(createQuoteDto.contact);
+      }
+
+      if (createQuoteDto.opportunity) {
+        opportunity = await this.opportunitiesService.findOne(
+          createQuoteDto.opportunity,
+        );
+
+        if (!opportunity) {
+          throw new Error('La oportunidad especificada no existe');
+        }
+      }
+
+      const { quote_details, ...quoteData } = createQuoteDto;
+
+      const subtotalAmount = quote_details.reduce(
+        (sum, item) => sum + item.subtotal,
+        0,
       );
-    }
 
-    const { quote_details, ...quoteData } = createQuoteDto;
+      const total_amount =
+        subtotalAmount - (createQuoteDto?.global_discount || 0);
 
-    const subtotalAmount = quote_details.reduce(
-      (sum, item) => sum + item.subtotal,
-      0,
-    );
+      const currentYear = new Date().getFullYear();
+      const startOfYear = new Date(currentYear, 0, 1);
+      const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59, 999);
 
-    const total_amount =
-      subtotalAmount - (createQuoteDto?.global_discount || 0);
-
-    const currentYear = new Date().getFullYear();
-    const startOfYear = new Date(currentYear, 0, 1);
-    const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59, 999);
-
-    const numberOfQuotes = await this.quotesRepository.count({
-      where: { issue_date: Between(startOfYear, endOfYear) },
-    });
-
-    const generatedNumber = `COT-${new Date().getFullYear()}-${(numberOfQuotes + 1).toString().padStart(3, '0')}`;
-
-    const newQuote = this.quotesRepository.create({
-      ...quoteData,
-      currency: quoteData.currency?.toString(),
-      number: generatedNumber,
-      issue_date: new Date(),
-      subtotal_amount: subtotalAmount,
-      total_amount: total_amount,
-      company,
-      client,
-      contact,
-      opportunity,
-    });
-
-    const savedQuote = await this.quotesRepository.save(newQuote);
-
-    for (const [index, detail] of quote_details.entries()) {
-      const quoteDetail = this.quoteDetailsRepository.create({
-        ...detail,
-        order: index + 1,
-        quote: savedQuote,
-
-        code: `DET-${savedQuote.id.toString().padStart(2, '0')}-${(index + 1).toString().padStart(2, '0')}`,
+      const numberOfQuotes = await this.quotesRepository.count({
+        where: { issue_date: Between(startOfYear, endOfYear) },
       });
-      details.push(quoteDetail);
-    }
-    const savedDetail = await this.quoteDetailsRepository.save(details);
 
-    return savedQuote;
+      const generatedNumber = `COT-${new Date().getFullYear()}-${(numberOfQuotes + 1).toString().padStart(3, '0')}`;
+
+      const newQuote = querryRunner.manager.create(Quote, {
+        ...quoteData,
+        currency: quoteData.currency?.toString(),
+        number: generatedNumber,
+        issue_date: new Date(),
+        subtotal_amount: subtotalAmount,
+        total_amount: total_amount,
+        company,
+        client,
+        contact,
+        opportunity,
+      });
+
+      const savedQuote = await querryRunner.manager.save(Quote, newQuote);
+
+      for (const [index, detail] of quote_details.entries()) {
+        const quoteDetail = querryRunner.manager.create(QuoteDetail, {
+          ...detail,
+          order: index + 1,
+          quote: savedQuote,
+
+          code: `DET-${savedQuote.id.toString().padStart(2, '0')}-${(index + 1).toString().padStart(2, '0')}`,
+        });
+        details.push(quoteDetail);
+      }
+      await querryRunner.manager.save(QuoteDetail, details);
+
+      await querryRunner.commitTransaction();
+
+      return savedQuote;
+    } catch (error) {
+      await querryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await querryRunner.release();
+    }
   }
 
   findAll() {
