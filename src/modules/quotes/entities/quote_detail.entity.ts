@@ -12,37 +12,31 @@ export class QuoteDetail {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   product_name: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: false })
   code: string;
 
-  @Column({ type: 'text', nullable: true })
-  notes: string;
-
-  @Column({ type: 'int', width: 60, nullable: true })
+  @Column({ type: 'int', width: 60, nullable: false, default: 1 })
   quantity: number;
 
-  @Column({ type: 'int', width: 60, nullable: true })
-  unity: number;
-
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, nullable: false })
   unit_price: number;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   discount_percentage: number;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   discount_amount: number;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   subtotal: number;
 
-  @Column({ type: 'int', width: 60, nullable: true })
+  @Column({ type: 'int', width: 60, nullable: false, default: 1 })
   order: number;
 
   @CreateDateColumn({ type: 'timestamp', nullable: true })

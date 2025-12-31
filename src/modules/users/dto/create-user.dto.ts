@@ -12,8 +12,4 @@ export class CreateUserDto {
   @IsEmail()
   @IsNotEmpty({ message: 'El correo electrónico del usuario es requerido' })
   email: string;
-
-  @IsString()
-  @IsNotEmpty({ message: 'La contraseña del usuario es requerida' })
-  password: string;
 }

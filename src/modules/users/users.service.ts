@@ -1,5 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { Injectable } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
@@ -12,12 +11,10 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
+  async findAll() {
+    const users = await this.usersRepository.find();
 
-  findAll() {
-    return `This action returns all users`;
+    return users;
   }
 
   async findOne(id: number) {
@@ -26,11 +23,21 @@ export class UsersService {
     return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  update(UserData: User, updateUserDto: UpdateUserDto) {
+    Object.assign(UserData, updateUserDto);
+
+    const updatedUser = this.usersRepository.save(UserData);
+
+    return updatedUser;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async ChangeActiveUserState(user: User) {
+    const userActiveState = user.active;
+
+    user.active = !userActiveState;
+
+    await this.usersRepository.save(user);
+
+    return user;
   }
 }

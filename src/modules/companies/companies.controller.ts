@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  BadRequestException,
+} from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -8,7 +17,15 @@ export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
   @Post()
-  create(@Body() createCompanyDto: CreateCompanyDto) {
+  async create(@Body() createCompanyDto: CreateCompanyDto) {
+    const exists = await this.companiesService.validateExistence(
+      createCompanyDto.business_name,
+    );
+
+    if (exists) {
+      throw new BadRequestException('La empresa ya existe');
+    }
+
     return this.companiesService.create(createCompanyDto);
   }
 
@@ -23,12 +40,28 @@ export class CompaniesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-    return this.companiesService.update(+id, updateCompanyDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateCompanyDto: UpdateCompanyDto,
+  ) {
+    const company = await this.companiesService.findOne(+id);
+
+    if (!company) {
+      new BadRequestException('La empresa no existe');
+      return;
+    }
+
+    return this.companiesService.update(company, updateCompanyDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.companiesService.remove(+id);
+  async ChangeActiveStatus(@Param('id') id: string) {
+    const company = await this.companiesService.findOne(+id);
+    if (!company) {
+      new BadRequestException('La empresa no existe');
+      return;
+    }
+
+    return this.companiesService.ChangeActiveStatus(company);
   }
 }

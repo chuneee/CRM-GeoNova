@@ -15,15 +15,15 @@ export class Company {
   brand_name: string;
 
   @Column({ type: 'varchar', length: 100 })
-  company_name: string;
+  business_name: string;
 
-  @Column({ type: 'varchar', length: 13, nullable: true })
+  @Column({ type: 'varchar', length: 13, nullable: false })
   rfc_init: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: false })
   email: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: false })
   phone: string;
 
   @Column({ type: 'text', nullable: true })

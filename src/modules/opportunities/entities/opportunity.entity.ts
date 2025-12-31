@@ -10,6 +10,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { OportunityStage } from '../enums/oportunity-stage.enum';
+import { TypeCurrency } from 'src/common/enums/type-currency.enum';
 
 @Entity('opportunities')
 export class Opportunity {
@@ -19,48 +21,52 @@ export class Opportunity {
   @Column({ type: 'varchar', length: 100 })
   code: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   title: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   estimated_value: number;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  stage: string;
+  @Column({
+    type: 'enum',
+    enum: OportunityStage,
+    default: OportunityStage.PROSPECCION,
+  })
+  stage: OportunityStage;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  type_currency: string;
+  @Column({ type: 'enum', enum: TypeCurrency, default: TypeCurrency.MXN })
+  type_currency: TypeCurrency;
 
   @Column('decimal', { precision: 10, scale: 2, nullable: true })
-  currency: string;
+  currency: number;
 
   @Column({ type: 'boolean', default: true })
   active: boolean;
 
-  @Column({ type: 'int', default: 1 })
+  @Column({ type: 'int', default: 0 })
   probability: number;
 
   @Column({ type: 'date', nullable: true })
   closing_date: Date;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'date', nullable: false })
   estimated_closing_date: Date;
 
   @Column({ type: 'text', nullable: true })
   lost_reason: string;
 
-  @CreateDateColumn({ type: 'timestamp', nullable: true })
+  @CreateDateColumn({ type: 'timestamp' })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', nullable: true })
+  @UpdateDateColumn({ type: 'timestamp' })
   updated_at: Date;
 
   //   RELATIONS
   @ManyToOne(() => Client, {
-    nullable: false,
+    nullable: true,
     eager: true,
     onDelete: 'CASCADE',
   })

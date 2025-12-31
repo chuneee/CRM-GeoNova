@@ -1,26 +1,49 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Company } from './entities/company.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class CompaniesService {
-  create(createCompanyDto: CreateCompanyDto) {
-    return 'This action adds a new company';
+  constructor(
+    @InjectRepository(Company)
+    private readonly companyRepository: Repository<Company>,
+  ) {}
+
+  async create(createCompanyDto: CreateCompanyDto) {
+    const newCompany = this.companyRepository.create(createCompanyDto);
+
+    return this.companyRepository.save(newCompany);
   }
 
-  findAll() {
-    return `This action returns all companies`;
+  async findAll() {
+    const companies = await this.companyRepository.find();
+    return companies;
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} company`;
+    return this.companyRepository.findOneBy({ id });
   }
 
-  update(id: number, updateCompanyDto: UpdateCompanyDto) {
-    return `This action updates a #${id} company`;
+  update(company: Company, updateCompanyDto: UpdateCompanyDto) {
+    Object.assign(company, updateCompanyDto);
+    return this.companyRepository.save(company);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} company`;
+  ChangeActiveStatus(company: Company) {
+    const actuveStatus = company.active;
+
+    company.active = !actuveStatus;
+
+    return this.companyRepository.save(company);
+  }
+
+  async validateExistence(business_name: string): Promise<boolean> {
+    const company = await this.companyRepository.exists({
+      where: { business_name },
+    });
+    return company;
   }
 }

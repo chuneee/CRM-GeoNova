@@ -7,9 +7,13 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { QuoteStatus } from '../enums/quote-status.enum';
+import { TypeCurrency } from 'src/common/enums/type-currency.enum';
+import { QuoteDetail } from './quote_detail.entity';
 
 @Entity('quotes')
 export class Quote {
@@ -22,10 +26,10 @@ export class Quote {
   @Column({ type: 'int', default: 1 })
   version: number;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'date', nullable: false })
   issue_date: Date;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'date', nullable: false })
   expiration_date: Date;
 
   @Column({ type: 'int', default: 1 })
@@ -34,22 +38,22 @@ export class Quote {
   @Column({ type: 'boolean', default: true })
   active: boolean;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  status: string;
+  @Column({ type: 'enum', enum: QuoteStatus, default: QuoteStatus.BORRADOR })
+  status: QuoteStatus;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   subtotal_amount: number;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   global_discount: number;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   total_amount: number;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  type_currency: string;
+  @Column({ type: 'enum', enum: TypeCurrency, default: TypeCurrency.MXN })
+  type_currency: TypeCurrency;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   currency: string;
 
   @Column({ type: 'text', nullable: true })
@@ -76,7 +80,7 @@ export class Quote {
   })
   company: Company;
 
-  @ManyToOne(() => Client, { nullable: false, eager: true })
+  @ManyToOne(() => Client, { nullable: true, eager: true })
   client: Client;
 
   @ManyToOne(() => Opportunity, {
@@ -85,6 +89,12 @@ export class Quote {
   })
   opportunity: Opportunity;
 
-  @ManyToOne(() => Contact, { nullable: false, eager: true })
+  @ManyToOne(() => Contact, { nullable: true, eager: true })
   contact: Contact;
+
+  @OneToMany(() => QuoteDetail, (quoteDetail) => quoteDetail.quote, {
+    cascade: true,
+    eager: true,
+  })
+  quote_details: QuoteDetail[];
 }

@@ -1,26 +1,61 @@
 import { Injectable } from '@nestjs/common';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Contact } from './entities/contact.entity';
+import { ClientsService } from '../clients/clients.service';
 
 @Injectable()
 export class ContactsService {
-  create(createContactDto: CreateContactDto) {
-    return 'This action adds a new contact';
+  constructor(
+    @InjectRepository(Contact)
+    private contactsRepository: Repository<Contact>,
+
+    private clientsService: ClientsService,
+  ) {}
+
+  async create(createContactDto: CreateContactDto) {
+    let client = await this.clientsService.findOne(createContactDto.client);
+
+    if (!client) {
+      throw new Error('Client not found');
+    }
+
+    const nesContact = this.contactsRepository.create({
+      ...createContactDto,
+      client: client,
+    });
+
+    return this.contactsRepository.save(nesContact);
   }
 
   findAll() {
-    return `This action returns all contacts`;
+    return this.contactsRepository.find();
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} contact`;
+    return this.contactsRepository.findOneBy({ id });
   }
 
-  update(id: number, updateContactDto: UpdateContactDto) {
-    return `This action updates a #${id} contact`;
+  async update(contact: Contact, updateContactDto: UpdateContactDto) {
+    if (!updateContactDto.client) {
+      throw new Error('Client ID is required');
+    }
+
+    let client = await this.clientsService.findOne(updateContactDto.client);
+
+    if (!client) {
+      throw new Error('Client not found');
+    }
+
+    Object.assign(contact, updateContactDto);
+    contact.client = client;
+
+    return this.contactsRepository.save(contact);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} contact`;
+  remove(contact: Contact) {
+    return this.contactsRepository.remove(contact);
   }
 }

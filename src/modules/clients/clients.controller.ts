@@ -1,19 +1,31 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { Auth } from 'src/common/decorators/auth.decorator';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { User } from '../users/entities/user.entity';
 
 @Controller('clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
   @Post()
-  create(@Body() createClientDto: CreateClientDto) {
-    return this.clientsService.create(createClientDto);
+  @Auth()
+  create(@Body() createClientDto: CreateClientDto, @AuthUser() authUser: User) {
+    return this.clientsService.create(createClientDto, authUser);
   }
 
   @Get()
-  findAll() {
+  async findAll() {
     return this.clientsService.findAll();
   }
 
@@ -23,12 +35,25 @@ export class ClientsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateClientDto: UpdateClientDto) {
-    return this.clientsService.update(+id, updateClientDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateClientDto: UpdateClientDto,
+  ) {
+    const client = await this.clientsService.findOne(+id);
+    if (!client) {
+      throw new Error('Cliente no encontrado');
+    }
+
+    return this.clientsService.update(client, updateClientDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.clientsService.remove(+id);
+  async changeActiveStatus(@Param('id') id: string) {
+    const client = await this.clientsService.findOne(+id);
+    if (!client) {
+      throw new Error('Cliente no encontrado');
+    }
+
+    return this.clientsService.changeActiveStatus(client);
   }
 }

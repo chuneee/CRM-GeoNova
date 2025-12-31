@@ -7,6 +7,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { LeadStatus } from '../enums/lead-status.enum';
+import { LeadOrigin } from '../enums/lead-origin.enum';
 
 @Entity('leads')
 export class Lead {
@@ -19,23 +21,23 @@ export class Lead {
   @Column({ type: 'varchar', length: 100 })
   surnames: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   email: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: false })
   phone: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   position: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   company: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  origin: string;
+  @Column({ type: 'enum', enum: LeadOrigin, nullable: true })
+  origin: LeadOrigin;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  status: string;
+  @Column({ type: 'enum', enum: LeadStatus, default: LeadStatus.NUEVO })
+  status: LeadStatus;
 
   @Column({ type: 'text', nullable: true })
   notes: string;

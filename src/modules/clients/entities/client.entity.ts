@@ -8,28 +8,29 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ClientType } from '../enums/client-type.enum';
 
 @Entity('clients')
 export class Client {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'enum', enum: ['fisica', 'moral'], default: 'fisica' })
-  type: string;
+  @Column({ type: 'enum', enum: ClientType, default: ClientType.INDIVIDUAL })
+  type: ClientType;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   name: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   business_name: string;
 
-  @Column({ type: 'varchar', length: 13, nullable: true })
+  @Column({ type: 'varchar', length: 13, nullable: false })
   rfc_init: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   email: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: false })
   phone: string;
 
   @Column({ type: 'text', nullable: true })
@@ -38,19 +39,19 @@ export class Client {
   @Column({ type: 'text', nullable: true })
   web_site: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   city: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   state_province: string;
 
-  @Column({ type: 'varchar', length: 10, nullable: true })
+  @Column({ type: 'varchar', length: 10, nullable: false })
   zip_code: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   country: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   industry: string;
 
   @Column({ type: 'boolean', default: true })
