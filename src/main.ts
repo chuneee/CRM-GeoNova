@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import * as express from 'express';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -29,6 +30,9 @@ async function bootstrap() {
       forbidNonWhitelisted: true, // Lanza error si hay propiedades desconocidas
     }),
   );
+
+  app.useGlobalFilters(new HttpExceptionFilter());
+
   app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
   const port = configService.get<number>('PORT') || 3000;
   await app.listen(port);

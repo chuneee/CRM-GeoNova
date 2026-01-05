@@ -85,6 +85,11 @@ export class QuotesService {
 
       const generatedNumber = `COT-${new Date().getFullYear()}-${(numberOfQuotes + 1).toString().padStart(3, '0')}`;
 
+      const days_validity = Math.ceil(
+        (quoteData.expiration_date.getTime() - new Date().getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
+
       const newQuote = querryRunner.manager.create(Quote, {
         ...quoteData,
         currency: quoteData.currency?.toString(),
@@ -92,6 +97,7 @@ export class QuotesService {
         issue_date: new Date(),
         subtotal_amount: subtotalAmount,
         total_amount: total_amount,
+        days_validity,
         company,
         client,
         contact,
@@ -106,7 +112,7 @@ export class QuotesService {
           order: index + 1,
           quote: savedQuote,
 
-          code: `DET-${savedQuote.id.toString().padStart(2, '0')}-${(index + 1).toString().padStart(2, '0')}`,
+          code: `DET-${savedQuote.id.toString().padStart(3, '0')}-${(index + 1).toString().padStart(3, '0')}`,
         });
         details.push(quoteDetail);
       }

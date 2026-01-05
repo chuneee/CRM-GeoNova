@@ -20,6 +20,10 @@ export class AuthRegisterDto {
   email: string;
 
   @IsString()
+  @IsNotEmpty({ message: 'El rol del usuario es requerido' })
+  role: string;
+
+  @IsString()
   @IsNotEmpty({ message: 'La contraseña del usuario es requerida' })
   @MinLength(8)
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {

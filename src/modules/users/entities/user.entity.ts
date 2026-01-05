@@ -31,6 +31,9 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   last_access: Date;
 
+  @Column({ type: 'varchar', length: 15, nullable: true })
+  role: string;
+
   @Column({ type: 'text', nullable: true })
   profile_image_url: string;
 

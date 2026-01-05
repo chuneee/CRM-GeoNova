@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthLoginDto } from './dto/auth-login.dto';
@@ -11,8 +13,11 @@ import { User } from '../users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -22,27 +27,50 @@ export class AuthService {
   ) {}
 
   async login({ email, password }: AuthLoginDto) {
-    const user = await this.userRepository.findOne({
-      where: { email, active: true },
-    });
-    if (!user) {
-      throw new UnauthorizedException('Credenciales inválidas');
+    try {
+      const user = await this.userRepository.findOne({
+        where: { email },
+      });
+      if (!user) {
+        throw new UnauthorizedException('Email o contraseña incorrectos');
+      }
+
+      // Verificar si el usuario está activo
+      if (!user.active) {
+        throw new UnauthorizedException(
+          'Tu cuenta ha sido desactivada. Contacta al administrador',
+        );
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Email o contraseña incorrectos');
+      }
+
+      const tokens = await this.generateTokens(user.id.toString(), user.email);
+
+      return {
+        user: this.sanitizeUser(user),
+        ...tokens,
+      };
+    } catch (error) {
+      // Si es una excepción HTTP, la re-lanzamos tal cual
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      // Para otros errores, loguear y lanzar un error genérico
+      this.logger.error(
+        `Error durante el login: ${error.message}`,
+        error.stack,
+      );
+      throw new BadRequestException(
+        'Error al procesar la solicitud de inicio de sesión',
+      );
     }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Credenciales inválidas');
-    }
-
-    const tokens = await this.generateTokens(user.id.toString(), user.email);
-
-    return {
-      user: this.sanitizeUser(user),
-      ...tokens,
-    };
   }
 
-  async register({ names, surnames, email, password }: AuthRegisterDto) {
+  async register({ names, surnames, email, password, role }: AuthRegisterDto) {
     const existingUser = await this.userRepository.findOne({
       where: { email },
     });
@@ -58,6 +86,7 @@ export class AuthService {
       email,
       password: hashedPassword,
       active: true,
+      role,
     });
 
     const saveUser = await this.userRepository.save(newUser);
@@ -65,6 +94,34 @@ export class AuthService {
     return {
       user: this.sanitizeUser(saveUser),
     };
+  }
+
+  async refreshToken(refreshToken: string) {
+    try {
+      // Verificar el refresh token
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+
+      const user = await this.userRepository.findOne({
+        where: { id: payload.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Usuario no encontrado');
+      }
+
+      return {
+        ...(await this.generateTokens(user.id.toString(), user.email)),
+        user: this.sanitizeUser(user),
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error refreshing token: ${error.message}`,
+        error.stack,
+      );
+      throw new UnauthorizedException('Refresh token inválido o expirado');
+    }
   }
 
   private async generateTokens(userId: string, email: string) {
