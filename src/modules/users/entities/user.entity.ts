@@ -4,9 +4,11 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { UserNotificationPreferences } from './user_notification_preferences.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -34,6 +36,9 @@ export class User {
   @Column({ type: 'varchar', length: 15, nullable: true })
   role: string;
 
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone: string;
+
   @Column({ type: 'text', nullable: true })
   profile_image_url: string;
 
@@ -46,4 +51,10 @@ export class User {
   //RELATIONS
   @ManyToOne(() => Company, { nullable: true })
   company: Company;
+
+  @OneToOne(() => UserNotificationPreferences, (unp) => unp.user, {
+    cascade: true,
+    nullable: true,
+  })
+  notification_preferences: UserNotificationPreferences;
 }

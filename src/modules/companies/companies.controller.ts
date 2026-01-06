@@ -46,6 +46,8 @@ export class CompaniesController {
   ) {
     const company = await this.companiesService.findOne(+id);
 
+    console.log('updateCompanyDto:', updateCompanyDto);
+
     if (!company) {
       new BadRequestException('La empresa no existe');
       return;

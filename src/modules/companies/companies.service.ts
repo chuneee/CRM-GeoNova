@@ -13,7 +13,10 @@ export class CompaniesService {
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto) {
-    const newCompany = this.companyRepository.create(createCompanyDto);
+    const newCompany = this.companyRepository.create({
+      ...createCompanyDto,
+      settings: undefined,
+    });
 
     return this.companyRepository.save(newCompany);
   }
@@ -24,7 +27,10 @@ export class CompaniesService {
   }
 
   findOne(id: number) {
-    return this.companyRepository.findOneBy({ id });
+    return this.companyRepository.findOne({
+      where: { id },
+      relations: ['settings'],
+    });
   }
 
   update(company: Company, updateCompanyDto: UpdateCompanyDto) {

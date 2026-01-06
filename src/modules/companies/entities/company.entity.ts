@@ -2,9 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { CompanySettings } from './company_settings.entity';
 
 @Entity('companies')
 export class Company {
@@ -29,6 +31,18 @@ export class Company {
   @Column({ type: 'text', nullable: true })
   address: string;
 
+  @Column({ type: 'text', nullable: true })
+  website: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  state_province: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  city: string;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  zip_code: string;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   logo_url: string;
 
@@ -40,4 +54,10 @@ export class Company {
 
   @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updated_at: Date;
+
+  @OneToOne(() => CompanySettings, (settings) => settings.company, {
+    cascade: true,
+    nullable: true,
+  })
+  settings: CompanySettings;
 }

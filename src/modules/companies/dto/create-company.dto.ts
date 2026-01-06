@@ -4,9 +4,10 @@ import {
   IsOptional,
   IsPhoneNumber,
   IsString,
-  Max,
   MaxLength,
+  Validate,
 } from 'class-validator';
+import { CompanySettingsDto } from './company-settings.dto';
 
 export class CreateCompanyDto {
   @IsString()
@@ -35,5 +36,32 @@ export class CreateCompanyDto {
 
   @IsString()
   @IsOptional()
+  website: string;
+
+  @IsString()
+  @IsOptional()
   address: string;
+
+  @IsString()
+  @IsOptional()
+  state_province: string;
+
+  @IsString()
+  @IsOptional()
+  city: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(10, {
+    message: 'El código postal no puede exceder los 10 caracteres',
+  })
+  zip_code: string;
+
+  @IsString()
+  @IsOptional()
+  logo_url: string;
+
+  @IsOptional()
+  @Validate(() => CompanySettingsDto)
+  settings: CompanySettingsDto;
 }
